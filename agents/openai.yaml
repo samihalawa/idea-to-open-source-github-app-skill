@@ -1,0 +1,4 @@
+interface:
+  display_name: "Idea to Open-Source GitHub App"
+  short_description: "Turn a working idea or local tool into a published, installable open-source repo"
+  default_prompt: "Use $idea-to-open-source-github-app-skill to take this idea or local tool to a finished public GitHub app: check prior art and credit it, pick the smallest installable shape, make it survive reboots, build a clean public tree with no private files or binaries, set licence and upstream attribution, ship a one-command installer and real release assets with hashes, set description, topics and homepage, register it where users look, then install it as a stranger from the README and fix whatever fails before reporting."
