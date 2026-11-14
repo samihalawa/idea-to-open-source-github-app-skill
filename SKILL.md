@@ -19,6 +19,28 @@ remote/stdio publishing), `plugin-creator` (plugin manifests),
 `universal-mobile-deploy-skill` (store apps). Use them for their part instead of
 repeating it here.
 
+## Standing rules
+
+- Minimum that works. Most of any idea already exists somewhere; search extensively,
+  reuse, and add only the missing piece. Do not over-engineer.
+- One product, one repository. Its app, website, plugins and MCP tools live together;
+  split copies drift. When the source must stay in a private monorepo, publish a
+  public mirror and run the mirror workflow from the public repo.
+- Never ship a second variant beside the first. Change the existing app and put the
+  choice in its UI or a flag (for example an endpoint picker: original service or
+  self-hosted), then delete the superseded repo, folder, install and listing in the
+  same task and prove nothing stale is left.
+- Name it after the general job a stranger would search for, not a narrow feature or
+  an internal codename.
+- Anything with a window must look finished: little text, clear hierarchy, sensible
+  size, restrained colour. An ugly app is not done.
+- Credentials come from the owner's password manager or environment at the tool
+  layer. Never ask for them and never commit them.
+- Prove it with a real account and a real task, including the sign-in or OAuth path.
+- Publishing includes the listings: every marketplace, registry and store that fits,
+  submitted for review and followed until approved, with the approved links added to
+  the README and website.
+
 ## 1. Look around first
 
 Search first, write second. Do this before packaging an idea, and equally before
@@ -94,6 +116,12 @@ different user (for example a DMG for non-terminal users).
   or more. Start/stop with `launchctl bootstrap|bootout gui/$(id -u)` and restart with
   `launchctl kickstart -k`. Verify by killing the process and seeing a new pid, and
   with `launchctl print gui/$(id -u)/<label>`.
+- After install, read the restart count (`launchctl print` shows `runs`). A count that
+  keeps climbing means something is killing it: commonly a local watchdog or reaper
+  that matches a keyword in the command line. Add the service to that keep-list.
+- A release build signed with a distribution identity must not share a bundle id with
+  the development build; give the dev build its own id so the two do not corrupt each
+  other's system permissions.
 - If it depends on a private or undocumented API, an entitlement, or a permission
   prompt, say so in the README with the OS versions it was tested on.
 
@@ -246,6 +274,10 @@ expected. Check the result:
 gh api repos/<owner>/<repo>/community/profile --jq '{health_percentage, files:(.files|with_entries(.value|=(.!=null)))}'
 gh repo view <owner>/<repo> --json description,homepageUrl,licenseInfo,repositoryTopics,visibility
 ```
+
+Store and directory reviewers read everything in the submission: remove retired
+content, and do not name competing platforms in release notes. A shipped store version
+is closed; a fix needs a new version number.
 
 Where it applies, register it where users look: npm or PyPI, the MCP registry
 (`server.json`), Smithery, a Homebrew tap, the plugin marketplace, the skills
