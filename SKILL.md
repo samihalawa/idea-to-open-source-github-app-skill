@@ -207,9 +207,23 @@ Native macOS app:
 for a in arm64 x86_64; do swiftc -O -target $a-apple-macos13.0 Sources/*.swift -o build/$NAME-$a; done
 mkdir -p build/$NAME.app/Contents/MacOS && lipo -create build/$NAME-arm64 build/$NAME-x86_64 -output build/$NAME.app/Contents/MacOS/$NAME
 cp Info.plist build/$NAME.app/Contents/ && codesign --force -s - build/$NAME.app
-create-dmg --volname "$NAME" --app-drop-link 425 190 dist/$NAME-$VER.dmg build/$NAME.app
+S=$(mktemp -d); cp -R build/$NAME.app "$S/"; ln -s /Applications "$S/Applications"
+hdiutil create -volname "$NAME" -srcfolder "$S" -fs HFS+ -format UDZO -ov dist/$NAME-$VER.dmg
 codesign -dv build/$NAME.app 2>&1 | grep -E 'Signature|TeamIdentifier'; spctl -a -vv build/$NAME.app
 ```
+
+Build the DMG from a private staging folder as above. Tools that lay the window out through
+Finder (`create-dmg`) open the volume on the owner's screen, where a stray paste or drop ends up
+inside the published image. Mount every DMG and list its contents (`ls -A`) before uploading.
+
+A menu bar app can be running and invisible: a full menu bar or a menu bar manager tucks new
+icons behind an overflow arrow. Confirm the item through accessibility
+(`osascript -e 'tell application "System Events" to tell process "<App>" to name of every menu item of menu 1 of menu bar item 1 of menu bar 1'`)
+before calling the UI broken, and say so in the README.
+
+Developer ID certificates can only be created by the Apple account holder in the developer
+portal (the App Store Connect API answers 403). Without one in the keychain, ship ad-hoc signed
+and say so; do not promise notarization.
 
 Always pin the deployment target; a build that inherits the build machine's OS
 version will not launch on older systems. Describe signing as it is: `Signature=adhoc`
@@ -295,7 +309,9 @@ help from the working folder:
 4. Kill it and confirm it comes back; where a reboot is the promise, state plainly
    whether a reboot was actually tested.
 5. Download the release asset from the public URL, compare its hash with
-   `SHA256SUMS.txt`, and launch it.
+   `SHA256SUMS.txt`, and launch it. Run every other install route the README
+   names (Homebrew, DMG first launch) the same way, and check each command against
+   the installed tool version: flags disappear (`brew --no-quarantine` is gone in Homebrew 7).
 6. Open the repo page logged out: images render, links resolve, the licence shows.
 7. Run `uninstall` and confirm nothing is left.
 
