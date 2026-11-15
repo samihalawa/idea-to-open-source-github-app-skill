@@ -221,9 +221,25 @@ icons behind an overflow arrow. Confirm the item through accessibility
 (`osascript -e 'tell application "System Events" to tell process "<App>" to name of every menu item of menu 1 of menu bar item 1 of menu bar 1'`)
 before calling the UI broken, and say so in the README.
 
-Developer ID certificates can only be created by the Apple account holder in the developer
-portal (the App Store Connect API answers 403). Without one in the keychain, ship ad-hoc signed
-and say so; do not promise notarization.
+Before shipping ad-hoc signed, look for an existing Developer ID identity; a missing one in
+`security find-identity` is not proof there is none:
+
+- List the team's certificates through the App Store Connect API (`GET /v1/certificates`). An
+  active `DEVELOPER_ID_APPLICATION` entry means a private key exists on some Mac.
+- Check every keychain file, not only the default search list:
+  `for k in ~/Library/Keychains/*.keychain-db; do security find-identity -v -p codesigning "$k"; done`.
+  Older login keychains (`login_renamed_N`) often still hold the key; unlock with
+  `security unlock-keychain -p` (never `show-keychain-info`, which opens a dialog and hangs), run
+  `security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k`, add the keychain to the
+  search list for the build and restore the list afterwards.
+- Only creating a new Developer ID certificate needs the account holder (the API answers 403).
+
+Then sign with `codesign --options runtime --timestamp --sign <identity>`, notarize the zip and
+the DMG with `xcrun notarytool submit <file> --key <AuthKey.p8> --key-id <id> --issuer <id> --wait`,
+staple the app and the DMG (`xcrun stapler staple`), re-zip the stapled app, and run the hardened
+build once: the hardened runtime can break what the ad-hoc build did. Keep both steps in the build
+script behind environment variables so a contributor without the identity still gets a working
+ad-hoc build. A notarized build is a new version number.
 
 Always pin the deployment target; a build that inherits the build machine's OS
 version will not launch on older systems. Describe signing as it is: `Signature=adhoc`
